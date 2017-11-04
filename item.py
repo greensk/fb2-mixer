@@ -29,18 +29,23 @@ class BookItem:
     def getTagContent(self, tag):
         xml = self.getXmlContent()
         if xml != None:
-            # print(etree.tostring(xml, pretty_print=True))
             elements = xml.xpath('//fb:%s' % tag, namespaces=namespaces)
             if len(elements) > 0:
                 return elements[0].text
         return None
 
-    def getBookData(self, includeFilename = True):
+    def getBookData(self):
         data = {}
         data['Название'] = self.getTagContent('book-title')
         data['Автор'] = '%s %s' % (self.getTagContent('first-name'), self.getTagContent('last-name'))
-        if includeFilename:
-            data['Имя файла'] = ntpath.basename(self.path)
+        data['Имя файла'] = ntpath.basename(self.path)
+        return data
+
+    def getBookDataArray(self, includeFilename = True):
+        data = []
+        data.append(self.getTagContent('book-title'))
+        data.append(self.getTagContent('first-name'))
+        data.append(self.getTagContent('last-name'))
         return data
 
     def getXmlContent(self):
@@ -105,8 +110,9 @@ class BookItem:
         xml = self.getXmlContent()
         headLines = xml.xpath('//fb:body//fb:p', namespaces=namespaces)
 
-        dataToRemove = list(self.getBookData(False).values())
-        minLineLen = int(max(map(lambda d: len(d), dataToRemove)) * 1.5)
+        dataToRemove = self.getBookDataArray()
+        minLineLen = int(max(map(lambda d: len(d), dataToRemove)) * 3)
+        linesToRemove = []
 
         for currentNum in range(0, maxLines):
             if currentNum < len(headLines):
@@ -114,8 +120,11 @@ class BookItem:
                 currentText = currentLine.text
                 if (currentText == None or len(currentText) > minLineLen):
                     continue
-                if any(currentText.lower().find(content.lower()) != -1 for content in dataToRemove):
-                    currentLine.getparent().remove(currentLine)
+                if any(content != None and currentText.lower().find(content.lower()) != -1 for content in dataToRemove):
+                    print('remove %s' % currentText)
+                    linesToRemove.append(currentLine)
+        for line in linesToRemove:
+            line.getparent().remove(line)
 
     def output(self, path, zip):
         xml = self.getXmlContent()
