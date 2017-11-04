@@ -118,10 +118,7 @@ class BookItem:
             if currentNum < len(headLines):
                 currentLine = headLines[currentNum]
                 currentText = currentLine.text
-                if (currentText == None or len(currentText) > minLineLen):
-                    continue
-                if any(content != None and currentText.lower().find(content.lower()) != -1 for content in dataToRemove):
-                    print('remove %s' % currentText)
+                if any(content != None and currentText != None and currentText.lower().find(content.lower()) != -1 for content in dataToRemove):
                     linesToRemove.append(currentLine)
         for line in linesToRemove:
             line.getparent().remove(line)
